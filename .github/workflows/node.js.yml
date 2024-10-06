@@ -1,11 +1,11 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
+name: Node.js CI & Publish
 
 on:
   push:
-    branches: [ "main" ]
+    branches: 
+      - "main"
+    tags: 
+      - 'v*.*.*' # Trigger on version tags (e.g., v1.0.0)
   pull_request:
     branches: [ "main" ]
 
@@ -17,15 +17,48 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
+
+    # Setup Node.js environment
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+
+    # Install dependencies
     - run: npm ci
+
+    # Build project (if there's a build step)
     - run: npm run build --if-present
+
+    # Run tests
     - run: npm test
+
+  # Job to publish to npm
+  publish:
+
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Set up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*' # Use the latest LTS version
+          registry-url: 'https://registry.npmjs.org/'
+
+      # Authenticate with npm using NPM_TOKEN
+      - name: Authenticate to npm
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      # Install dependencies and publish
+      - run: |
+          npm install
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
