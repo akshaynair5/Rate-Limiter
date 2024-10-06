@@ -1,8 +1,8 @@
 {
-  "name": "rate-limiting-middleware",
+  "name": "rate-limiter",
   "version": "1.0.0",
   "description": "A flexible rate-limiting middleware for Node.js applications.",
-  "main": "index.js",
+  "main": "rate-limiter.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "gh-pages -d docs"

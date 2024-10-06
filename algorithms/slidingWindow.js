@@ -1,6 +1,5 @@
-const client = require('../redisClient');
+const slidingWindow = async (key, limit, windowInSeconds,client) => {
 
-const slidingWindow = async (key, limit, windowInSeconds) => {
   const now = Date.now();
   const windowStart = now - (windowInSeconds * 1000);
   const keyForUser = `requests:${key}`;

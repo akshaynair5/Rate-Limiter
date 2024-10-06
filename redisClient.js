@@ -1,24 +1,18 @@
-// redisClient.js
 const { createClient } = require('redis');
 
-// Create and configure Redis client
-const client = createClient({
-    url: 'redis://localhost:6379',
-    legacyMode: true // Enable legacy mode for backward compatibility
-});
+let client; // Redis client reference
 
-// Connect to Redis server when the application starts
-(async () => {
-    try {
-        await client.connect(); // Explicitly connect to Redis
+const redisConfig = async ({ host, port }) => {
+    if (!client) {
+        client = createClient({ url: `redis://${host}:${port}` , legacyMode: true });
+        
+        client.on('error', (err) => console.log('Redis Client Error', err));
+        
+        await client.connect(); // Ensure Redis connection
         console.log('Connected to Redis');
-    } catch (err) {
-        console.error('Redis connection error:', err);
     }
+    return client;
+};
 
-    client.on('error', (error) => console.error(`Redis Client Error: ${error}`));
-    client.on('ready', () => console.log('Redis client is ready'));
-})();
-
-// Export the Redis client for use in other modules
-module.exports = client;
+// Export the client and the configuration function
+module.exports = { redisConfig, client };

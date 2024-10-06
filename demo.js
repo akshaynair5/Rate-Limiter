@@ -1,7 +1,7 @@
 const express = require('express');
-const rateLimiter = require('./index.js');
+const { redisConfig } = require('./redisClient');
+const rateLimiter = require('./rate-limiter');
 
-// Import the algorithm
 const app = express();
 const PORT = 3000;
 
@@ -14,23 +14,30 @@ const mockAuth = (req, res, next) => {
     next();
 };
 
-// Use the mock authentication middleware
 app.use(mockAuth);
 
-// Example routes with rate limiter
-app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, refillRate: 1,windowInSeconds: 60 }), (req, res) => {
-    res.send('This is a rate-limited resource!');
-});
+// Configure Redis connection (Make sure Redis is initialized before any route is called)
+const redisSetUp = { host: 'localhost', port: 6379 };
 
-app.get('/api/data', rateLimiter('slidingWindow', { limit: 5,windowInSeconds: 60 }), (req, res) => {
-    res.send('This is another rate-limited resource!');
-});
+redisConfig(redisSetUp).then((client) => {
+    // Example routes with rate limiter
+    app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, refillRate: 1, windowInSeconds: 60 ,client}), (req, res) => {
+        res.send('This is a rate-limited resource!');
+    });
 
-app.post('/api/upload', rateLimiter('leakyBucket', { limit: 5, ratePerSecond: 1 }), (req, res) => {
-    res.send('This is a rate-limited upload endpoint!');
-});
+    app.get('/api/data', rateLimiter('slidingWindow', { limit: 5, windowInSeconds: 60 ,client}), (req, res) => {
+        res.send('This is another rate-limited resource!');
+    });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    app.post('/api/upload', rateLimiter('leakyBucket', { capacity: 10, period: 50, leaksPerPeriod: 5, requestExpiryInSeconds: 90, client }), (req, res) => {
+        res.send('This is a rate-limited resource!');
+    });
+
+    // Start the server
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}).catch((err) => {
+    console.error('Failed to initialize Redis:', err);
+    process.exit(1); // Exit the app if Redis fails to connect
 });

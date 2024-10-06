@@ -1,106 +1,163 @@
-```markdown
+Here’s an updated `README.md` that provides a detailed explanation of how users can use the wrapper function for rate-limiting, the algorithms (Token Bucket, Sliding Window, and Leaky Bucket), and when and where to use each algorithm, along with an explanation of each parameter's purpose.
+
+---
+
 # Rate Limiting Middleware
 
-A flexible and powerful rate-limiting middleware for Node.js applications that allows developers to control API usage with various algorithms. It supports customizable rate limits, an IP reputation system for dynamic adjustments, and provides a user-friendly experience for both developers and end-users.
+This rate-limiting middleware enables you to apply different rate-limiting algorithms (Token Bucket, Sliding Window, Leaky Bucket) in an Express.js application. This setup also integrates Redis to manage the state of requests efficiently across distributed systems.
 
-## Features
+## Setup
 
-- **Multiple Rate Limiting Algorithms**: Choose from three algorithms:
-  - **Token Bucket**: Allows bursts of traffic while maintaining an average rate.
-  - **Sliding Window**: Tracks requests over rolling time periods to prevent spikes.
-  - **Leaky Bucket**: Processes requests at a fixed rate, smoothing out bursts.
+Before you can use the rate-limiting middleware, ensure you have Redis installed and running on your local machine or accessible remotely.
 
-- **IP Reputation System**: Dynamically adjusts rate limits based on user behavior, rewarding good customers and penalizing abusive users.
+### Redis Setup
 
-- **Grace Periods**: Users can exceed rate limits a specified number of times before penalties are applied, improving user experience.
+To install Redis, follow the instructions for your operating system from the official Redis website:
 
-- **Real-Time Logging**: Built-in logging for tracking request counts and rate-limit breaches.
+- [Redis Installation Guide](https://redis.io/download)
 
-- **User-Friendly Documentation**: Comprehensive documentation to guide developers in integrating and using the middleware effectively.
+Once Redis is installed and running, you can set up your Express.js application with this rate-limiter.
 
-## Installation
+### Installation
 
-You can install the package via npm. Run the following command in your project directory:
+1. Clone this repository or include the rate-limiter files in your project.
+2. Install necessary dependencies by running:
 
 ```bash
-npm install rate-limiting-middleware
+npm install express redis
+```
+
+3. Initialize Redis and configure the Redis connection in your application:
+
+```javascript
+const express = require('express');
+const { redisConfig } = require('./redisClient');
+const rateLimiter = require('./rate-limiter');
 ```
 
 ## Usage
 
-### Basic Setup
+### Rate Limiting Middleware
 
-1. **Import the Middleware**:
-
-```javascript
-const express = require('express');
-const rateLimiter = require('rate-limiting-middleware');
-
-const app = express();
-```
-
-2. **Configure and Use the Middleware**:
-
-You can choose the rate-limiting algorithm and set the desired limits. Here's an example:
+To apply rate-limiting to any route in your application, you need to call the `rateLimiter` function and pass the desired algorithm and its corresponding configuration.
 
 ```javascript
-// Token Bucket example
-app.use('/api/resource', rateLimiter('tokenBucket', { 
-  limit: 1000, 
-  refillRate: 10, // 10 tokens added every second 
-  windowInSeconds: 60 
-}));
-
-// Sliding Window example
-app.use('/api/data', rateLimiter('slidingWindow', { 
-  limit: 500, 
-  windowInSeconds: 60 
-}));
-
-// Leaky Bucket example
-app.use('/api/upload', rateLimiter('leakyBucket', { 
-  limit: 50, 
-  ratePerSecond: 1 // 1 request processed per second 
-}));
-
-app.get('/api/resource', (req, res) => {
-  res.send('This is a rate-limited resource!');
+app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, refillRate: 1, windowInSeconds: 60, client }), (req, res) => {
+    res.send('This is a rate-limited resource!');
 });
 ```
 
-### Adjusting Rate Limits Based on IP Reputation
+### Configuring Redis Connection
 
-You can also integrate the IP reputation system to dynamically adjust rate limits:
+The Redis client needs to be properly initialized before it is passed to the rate-limiter middleware. The Redis setup in `redisConfig` should be done before any routes are defined to ensure smooth operation.
+
+Example:
 
 ```javascript
-app.use('/api', async (req, res, next) => {
-  const userId = req.user.id || req.ip; // Unique identifier
+const redisSetUp = { host: 'localhost', port: 6379 };
 
-  const excessCount = await client.getAsync(`excessRequests:${userId}`) || 0;
-
-  const { limit, windowInSeconds } = await adjustRateLimits(userId, excessCount);
-
-  // Pass limit to the rate-limiting function based on reputation
-  let allowed = await tokenBucket(userId, limit, 10, windowInSeconds);
-  
-  if (allowed) {
-    await client.del(`excessRequests:${userId}`);
-    next(); // Allow the request
-  } else {
-    await trackExcessRequests(userId);
-    await warnUser(userId);
-    res.status(429).json({ message: 'Rate limit exceeded, but you have more chances!' });
-  }
+redisConfig(redisSetUp).then((client) => {
+    // Pass the `client` to the rate limiter
 });
 ```
 
-## Configuration Options
+## Available Algorithms
 
-- **Algorithm**: Specify which rate-limiting algorithm to use (`tokenBucket`, `slidingWindow`, `leakyBucket`).
-- **Limit**: The maximum number of requests allowed within the specified time window.
-- **Refill Rate** (Token Bucket only): The rate at which tokens are added.
-- **Window In Seconds**: The time window for rate limiting in seconds.
-- **Rate Per Second** (Leaky Bucket only): The fixed rate at which requests are processed.
+This package supports three different rate-limiting algorithms:
+
+1. **Token Bucket**
+2. **Sliding Window**
+3. **Leaky Bucket**
+
+Each algorithm is designed for different use cases, and you should choose the one that best suits your needs.
+
+### 1. Token Bucket Algorithm
+
+**Description**: The Token Bucket algorithm allows a burst of requests followed by a regulated refill of tokens at a constant rate. Requests are only processed if there are available tokens.
+
+**Best Use Case**: When you want to allow occasional bursts of traffic but control the overall request rate in the long term. Useful for APIs that can tolerate temporary spikes in traffic.
+
+#### Parameters:
+- **limit**: The maximum number of tokens (requests) that can be handled in one burst.
+- **refillRate**: The number of tokens refilled in the bucket per time unit.
+- **windowInSeconds**: The time window (in seconds) within which tokens are refilled.
+- **client**: Redis client instance for managing the rate-limiting state.
+
+#### Example:
+```javascript
+app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, refillRate: 1, windowInSeconds: 60, client }), (req, res) => {
+    res.send('Rate-limited with Token Bucket');
+});
+```
+
+### 2. Sliding Window Algorithm
+
+**Description**: The Sliding Window algorithm smooths out request patterns by dividing the time window into smaller intervals. Requests are counted within the current and previous intervals, providing a more accurate measurement of request rates.
+
+**Best Use Case**: When you want more even distribution of requests and avoid bursty traffic patterns. This algorithm is ideal when strict control over request rates is required, ensuring that requests are handled consistently.
+
+#### Parameters:
+- **limit**: The maximum number of requests allowed within the window.
+- **windowInSeconds**: The length of the time window (in seconds) over which requests are tracked.
+- **client**: Redis client instance for managing the rate-limiting state.
+
+#### Example:
+```javascript
+app.get('/api/data', rateLimiter('slidingWindow', { limit: 5, windowInSeconds: 60, client }), (req, res) => {
+    res.send('Rate-limited with Sliding Window');
+});
+```
+
+### 3. Leaky Bucket Algorithm
+
+**Description**: The Leaky Bucket algorithm regulates the rate at which requests are processed, ensuring a steady flow. It queues excess requests and "leaks" them at a constant rate.
+
+**Best Use Case**: When you want to process requests at a steady rate regardless of traffic spikes. It’s useful for systems where a consistent request processing rate is more important than immediate response.
+
+#### Parameters:
+- **capacity**: The maximum number of requests that can be stored in the bucket.
+- **period**: The time interval (in milliseconds) at which the bucket is checked.
+- **leaksPerPeriod**: The number of requests that "leak" (are processed) from the bucket per period.
+- **requestExpiryInSeconds**: The time after which requests in the bucket are discarded.
+- **client**: Redis client instance for managing the rate-limiting state.
+
+#### Example:
+```javascript
+app.post('/api/upload', rateLimiter('leakyBucket', { capacity: 10, period: 50, leaksPerPeriod: 5, requestExpiryInSeconds: 90, client }), (req, res) => {
+    res.send('Rate-limited with Leaky Bucket');
+});
+```
+
+## When to Use Each Algorithm
+
+### Token Bucket:
+- **Use When**: You want to allow bursts of traffic followed by a regulated request flow.
+- **Example**: An API that can handle occasional traffic surges but needs to maintain an average request rate over time.
+
+### Sliding Window:
+- **Use When**: You need even distribution of requests over time, ensuring consistent rate limiting.
+- **Example**: Login rate limiter to prevent brute-force attacks without allowing bursts of login attempts.
+
+### Leaky Bucket:
+- **Use When**: You want a steady request flow, processing requests at a constant rate.
+- **Example**: A system that cannot handle traffic spikes and needs a smooth flow of requests, such as a media server.
+
+## Error Handling
+
+If the Redis client fails to connect or is unavailable, the middleware will respond with a `503 Service Unavailable` error. Ensure your Redis service is running correctly and reachable from your application.
+
+Example error handling:
+
+```javascript
+redisConfig(redisSetUp).catch((err) => {
+    console.error('Failed to initialize Redis:', err);
+    process.exit(1);
+});
+```
+
+## Conclusion
+
+This rate-limiter is a versatile solution for controlling traffic to your APIs. By leveraging Redis, it can scale across multiple servers, making it ideal for distributed systems. Each algorithm offers a unique approach to managing request flow, so choose the one that best fits your application's needs.
 
 ## License
 

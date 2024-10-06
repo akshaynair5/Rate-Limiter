@@ -1,6 +1,5 @@
-const client = require('../redisClient');
+const tokenBucket = async (key, limit, refillRate, client) => {
 
-const tokenBucket = async (key, limit, refillRate) => {
     const tokensKey = `tokens:${key}`;
     const lastRefillKey = `lastRefill:${key}`;
 
