@@ -1,15 +1,28 @@
 {
-  "name": "rate-limiter",
+  "name": "rate-limiting-middleware",
   "version": "1.0.0",
+  "description": "A flexible rate-limiting middleware for Node.js applications.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "gh-pages -d docs"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akshaynair5/Rate-Limiter"
+  },
+  "keywords": [
+    "rate limiting",
+    "middleware",
+    "node.js"
+  ],
+  "author": "Akshay Nair",
+  "license": "MIT",
   "dependencies": {
-    "express": "^4.21.0",
+    "express": "^4.17.1",
     "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.1"
   }
 }

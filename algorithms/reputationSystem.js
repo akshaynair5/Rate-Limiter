@@ -1,6 +1,4 @@
-const redis = require('redis');
-const client = redis.createClient();
-
+const client = require('../redisClient');
 /**
  * Get the current reputation score of the user/IP
  * @param {string} key - Unique key for the user/IP (e.g., user ID or IP address)
@@ -8,7 +6,7 @@ const client = redis.createClient();
  * @returns {number} - The current reputation score of the user/IP
  */
 const getReputation = async (key, defaultScore = 100) => {
-  let score = await client.getAsync(`reputation:${key}`);
+  let score = await client.get(`reputation:${key}`); // Use client.get directly
   if (!score) {
     score = defaultScore; // Default score if user/IP is new
   }
