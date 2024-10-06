@@ -1,5 +1,5 @@
 {
-  "name": "rate-limiter-redis",
+  "name": "rate-limiting-redis",
   "version": "1.0.0",
   "description": "A flexible rate-limiting middleware for Node.js applications.",
   "main": "rate-limiter.js",
