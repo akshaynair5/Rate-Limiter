@@ -1,7 +1,3 @@
-Here’s an updated `README.md` that provides a detailed explanation of how users can use the wrapper function for rate-limiting, the algorithms (Token Bucket, Sliding Window, and Leaky Bucket), and when and where to use each algorithm, along with an explanation of each parameter's purpose.
-
----
-
 # Rate Limiting Middleware
 
 This rate-limiting middleware enables you to apply different rate-limiting algorithms (Token Bucket, Sliding Window, Leaky Bucket) in an Express.js application. This setup also integrates Redis to manage the state of requests efficiently across distributed systems.
