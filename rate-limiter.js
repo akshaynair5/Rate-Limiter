@@ -18,7 +18,7 @@ const rateLimiter = (algorithm, defaultLimitConfig) => {
             let allowed = false;
             switch (algorithm) {
                 case 'tokenBucket':
-                    allowed = await tokenBucket(userId, defaultLimitConfig.limit, defaultLimitConfig.refillRate, defaultLimitConfig.windowInSeconds, client);
+                    allowed = await tokenBucket(userId, defaultLimitConfig.limit, defaultLimitConfig.refillRate, client);
                     break;
                 case 'slidingWindow':
                     allowed = await slidingWindow(userId, defaultLimitConfig.limit, defaultLimitConfig.windowInSeconds, client);

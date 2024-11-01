@@ -8,8 +8,8 @@ const redisConfig = async ({ host, port }) => {
         
         client.on('error', (err) => console.log('Redis Client Error', err));
         
-        await client.connect(); // Ensure Redis connection
-        console.log('Connected to Redis');
+        await client.connect() // Ensure Redis connection
+            .then(() => console.log('Redis Connection Established'))
     }
     return client;
 };
