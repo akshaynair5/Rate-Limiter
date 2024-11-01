@@ -100,6 +100,7 @@ app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, refillRate: 1, 
 #### Example:
 ```javascript
 app.get('/api/data', rateLimiter('slidingWindow', { limit: 5, windowInSeconds: 60, client }), (req, res) => {
+    await consumeToken(req.user?.id || req.ip, limit=10, client);
     res.send('Rate-limited with Sliding Window');
 });
 ```
