@@ -76,12 +76,12 @@ Each algorithm is designed for different use cases, and you should choose the on
 #### Parameters:
 - **limit**: The maximum number of tokens (requests) that can be handled in one burst.
 - **refillRate**: The number of tokens refilled in the bucket per time unit.
-- **windowInSeconds**: The time window (in seconds) within which tokens are refilled.
 - **client**: Redis client instance for managing the rate-limiting state.
 
 #### Example:
 ```javascript
-app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, refillRate: 1, windowInSeconds: 60, client }), (req, res) => {
+app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, client }), (req, res) => {
+    await consumeToken(req.user?.id || req.ip, limit=10, client);
     res.send('Rate-limited with Token Bucket');
 });
 ```
@@ -100,7 +100,6 @@ app.get('/api/resource', rateLimiter('tokenBucket', { limit: 10, refillRate: 1, 
 #### Example:
 ```javascript
 app.get('/api/data', rateLimiter('slidingWindow', { limit: 5, windowInSeconds: 60, client }), (req, res) => {
-    await consumeToken(req.user?.id || req.ip, limit=10, client);
     res.send('Rate-limited with Sliding Window');
 });
 ```
