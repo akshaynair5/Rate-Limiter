@@ -1,5 +1,5 @@
 // Import Redis client and algorithms
-const tokenBucket = require('./algorithms/tokenBucket');
+const {tokenBucket} = require('./algorithms/tokenBucket');
 const slidingWindow = require('./algorithms/slidingWindow');
 const leakyBucket = require('./algorithms/leakyBucket');
 
@@ -18,13 +18,13 @@ const rateLimiter = (algorithm, defaultLimitConfig) => {
             let allowed = false;
             switch (algorithm) {
                 case 'tokenBucket':
-                    allowed = await tokenBucket(userId, defaultLimitConfig.limit, defaultLimitConfig.refillRate, client);
+                    allowed = await tokenBucket(userId, defaultLimitConfig.limit, client);
                     break;
                 case 'slidingWindow':
                     allowed = await slidingWindow(userId, defaultLimitConfig.limit, defaultLimitConfig.windowInSeconds, client);
                     break;
                 case 'leakyBucket':
-                    allowed = await leakyBucket(userId, defaultLimitConfig.capacity, defaultLimitConfig.period, defaultLimitConfig.leaksPerPeriod, defaultLimitConfig.requestExpiryInSeconds, client);
+                    allowed = await leakyBucket(userId, defaultLimitConfig.capacity, defaultLimitConfig.leaksPerPeriod ,defaultLimitConfig.period, defaultLimitConfig.requestExpiryInSeconds, client);
                     break;
                 default:
                     return res.status(400).json({ message: 'Invalid rate-limiting algorithm' });

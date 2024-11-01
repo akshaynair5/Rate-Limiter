@@ -5,6 +5,7 @@ const leakyBucket = async (userId, capacity, period, leaksPerPeriod, requestExpi
     // Fetch current bucket size and last leak time
     let currentBucketSize = await client.v4.get(keyForUser);
     let lastLeakTime = await client.v4.get(lastLeakTimeKey);
+    console.log(currentBucketSize)
 
     // Initialize the bucket for new users if not present
     if (currentBucketSize == null) {
@@ -37,7 +38,7 @@ const leakyBucket = async (userId, capacity, period, leaksPerPeriod, requestExpi
     if (currentBucketSize < capacity) {
         // Increment bucket size for this request
         await client.v4.set(keyForUser, currentBucketSize + 1);
-        console.log(currentBucketSize)
+        // Optionally set expiration on the key
         await client.v4.expire(keyForUser, requestExpiryInSeconds);
         
         return true; // Request allowed
