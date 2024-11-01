@@ -2,11 +2,10 @@
   "name": "rate-limiting-redis",
   "version": "1.0.1",
   "description": "A flexible rate-limiting middleware for Node.js applications.",
-    "main": "rate-limiter.js",
+  "main": "rate-limiter.js",
   "scripts": {
-    "build": "npm run build",                     
-    "deploy": "gh-pages -d docs",
-    "publish:npm": "npm publish"
+    "build": "npm run build",
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",
@@ -21,10 +20,13 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
-    "rate-limiting-redis": "^1.0.0",
     "redis": "^4.7.0"
   },
   "devDependencies": {
-    "gh-pages": "^6.1.1"
-  }
+    "gh-pages": "^6.1.1",
+    "semantic-release": "^24.2.0"
+  },
+  "files": [
+    "dist", "README.md"
+  ]
 }
