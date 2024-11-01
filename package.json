@@ -23,6 +23,7 @@
     "redis": "^4.7.0"
   },
   "devDependencies": {
+    "execa": "^5.1.1",
     "gh-pages": "^6.1.1",
     "semantic-release": "^24.2.0"
   },
